@@ -349,6 +349,19 @@ static을 붙이는 이유
 
 ```
 
+```markdown
+## 지금까지 LD_PRELOAD=../libft_malloc_x86_64_Linux.so ls 하면 실패한이유
+ft_malloc_ver.0.1.c 랑 비교하면서 뭐가 다른지 보면 이해가 될 것.
+
+- 경계/존 선택 불일치: `malloc_impl`은 크기로 TINY/SMALL 분기, `find_free_zone`은 크기 비교(< TINY/< SMALL)로 비트맵 선택 → 95/96B 등 경계에서 NULL. 해결: `find_free_zone`을 존 타입(TINY/SMALL) 인자로 받고, 분기 비교는 `<=`로 통일.
+- 잘못된 페이지 계산 호출: `malloc_impl` 초반에 `calculater_page_size(size)` 호출로, TINY/SMALL 플래그 로직에 걸려 `-1` 반환 → 즉시 NULL. 해결: 이 호출 제거(large 경로에서만 페이지 계산).
+- 잠금 설계 문제: `realloc`이 `ft_malloc/ft_free`를 호출하면 중첩 잠금으로 교착. 해결: API에서만 전역 락, 내부 `*_impl`은 무잠금으로 분리(또는 재귀 뮤텍스 사용).
+- 언락 래퍼 버그: `manage_free_mutex_unlock`가 실수로 `pthread_mutex_lock` 호출 → 교착. 해결: `pthread_mutex_unlock` 호출로 수정.
+- 기타 정리: `print_error`는 `const char *`로 수정(문자열 리터럴), `show_alloc_mem` 스냅샷 또는 전체 잠금, 재진입 위험 함수 사용 자제, 반환 포인터 정렬(가능하면 16B) 확인.
+
+
+```
+
 */
 
 
