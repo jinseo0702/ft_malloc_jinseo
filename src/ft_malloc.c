@@ -1,8 +1,388 @@
 #include "../include/ft_malloc.h"
-#include <string.h>
 
-
+//impl은 implementation(구현)의 줄임말입니다. 보통 함수 이름에 붙여 “내부 구현 함수”라는 뜻으로 씁니다.
 FREEDATA_t manage_free;
+static pthread_mutex_t manage_free_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/*
+multi thread 를 보호하기 위해서 mutex 작업을 실시한다.
+static 으로 선언된 변수들은 전부 datarace 가 발생 할 수 있다. ....
+현재 내코드의 ft_malloc_ver.0.1.c 을 보면 manage_free 의 동작은 크게 네가지로 볼 수 있다.
+- 주소부터 시작해서 mmap 에서 할당된 memory page의 주소를 찍기
+- meta data 안에 있는 data 전달하기
+- 관리하는 비트맵 on/off 시키기
+- mmap에서 할당한 메모리주소 받기 이다.
+
+그럼 mutex를 걸어야하 할때 반복되는 작업을 생각을 해보도록
+일단 manage_free 가 가지고 있는 FREEDATA_t를 한번 분석해보자
+typedef struct FREEDATA_s {
+  BLOCK96_t *_tiny;
+  BLOCK512_t *_small;
+  char tiny[16];
+  char small[16];
+  unsigned long ;
+  int large_cnt;
+} FREEDATA_t;
+
+여기서 읽기만하는 정보가 있는가?
+ - NO
+전부 READ / WRITE 를 반복한다.
+공통적으로 동작하는 과정을 세밀하게 분석을 하고 최대한 반복되는 최상단 추상적인 방법을 생각해보자.
+일단 구조체 멤버들이 어떤 작업을 하고 있는지 구분한다.
+ - _tiny
+  * 사용되는 함수 
+      void show_alloc_mem();
+      void *ft_malloc(size_t size);
+  * 하는 작업
+      show_alloc_mem 안에서는 index 에 맞는 BLOCK96_t를 가지와서 METADATA_t 로변환후 METADATA_t 정보를 출력 하는 작업을 한다.
+      또한 total size를 올리기 위해서 읽기 잡업을 실시한다.
+       - show_alloc_mem 에서는 READ 작업만 실행
+      //처음 할당 받을때 만
+      ft_malloc 안에서는 처음 100만큼 할당받을때 mmap 이 전달한 첫 주소를 기억한다. -> init_meta_data((void *)manage_free._tiny, TINY); 로 전달
+      처음받은 mmap 의 data 를 인덱스를 찾고(BLOCK96_t 기준 index) METADATA_t 형변환을 한다음 meta data 를 입력하는 작업을 한다.
+       - init_meta_data 에서는 WRITE 작업을 실시한다 
+      // 항상
+      METADATA_t *temp = (METADATA_t *)&manage_free._tiny[index];
+      temp->client_size = size;
+      return ((void *)(temp + 1));
+      처음 이후 부터는 빈주소로 할당된 곳 에서 전달한다.
+       - ft_malloc 에서는 READ / WRITE 작업을 실시한다.
+
+- _small
+  * 사용되는 함수 
+      void show_alloc_mem();
+      void *ft_malloc(size_t size);
+  * 하는 작업
+      show_alloc_mem 안에서는 index 에 맞는 BLOCK512_s를 가지와서 METADATA_t 로변환후 METADATA_t 정보를 출력 하는 작업을 한다.
+      또한 total size를 올리기 위해서 읽기 잡업을 실시한다.
+       - show_alloc_mem 에서는 READ 작업만 실행
+      //처음 할당 받을때 만
+      ft_malloc 안에서는 처음 100만큼 할당받을때 mmap 이 전달한 첫 주소를 기억한다. -> init_meta_data((void *)manage_free._small, SMALL); 로 전달
+      처음받은 mmap 의 data 를 인덱스를 찾고(BLOCK512_s 기준 index) METADATA_t 형변환을 한다음 meta data 를 입력하는 작업을 한다.
+       - init_meta_data 에서는 WRITE 작업을 실시한다 
+      // 항상
+      METADATA_t *temp = (METADATA_t *)&manage_free._small[index];
+      temp->client_size = size;
+      return ((void *)(temp + 1));
+      처음 이후 부터는 빈주소로 할당된 곳 에서 전달한다.
+       - ft_malloc 에서는 READ / WRITE 작업을 실시한다.
+
+- tiny[16]
+  * 사용되는 함수
+    void show_alloc_mem();
+    unsigned char find_free_zone(size_t size_type);
+    void ft_free(void *ptr);
+  * 하는 작업
+    show_alloc_mem 안에서는 idx 에 맞는 char 형을 반환하는 작업을 한다 -> find = manage_free.tiny[idx] & (1 << fos);
+    - show_alloc_mem 에서는 READ 작업만 실시한다.
+    find_free_zone 에서는 idx 에 맞는 char 형을 반환하는 작업을 한다 -> find = manage_free.tiny[idx] & (1 << fos);
+    또한 직접 값을 변경하는 작업도 실시한다.(할당한 부분을 체크한다.) -> manage_free.tiny[idx] |= (1 << fos);
+     - find_free_zone 에서는 READ / WRITE 작업을 실시한다.
+    ft_free 에서는 해제한 부분의 값을 변경한다. -> manage_free.tiny[index] &= ~(1 << meta->position);
+     - ft_free 에서는 WRITE 작업을 실시한다.
+
+- small[16]
+  * 사용되는 함수
+    void show_alloc_mem();
+    unsigned char find_free_zone(size_t size_type);
+    void ft_free(void *ptr);
+  * 하는 작업
+    show_alloc_mem 안에서는 idx 에 맞는 char 형을 반환하는 작업을 한다 -> find = manage_free.small[idx] & (1 << fos);
+    - show_alloc_mem 에서는 READ 작업만 실시한다.
+    find_free_zone 에서는 idx 에 맞는 char 형을 반환하는 작업을 한다 -> find = manage_free.small[idx] & (1 << fos);
+    또한 직접 값을 변경하는 작업도 실시한다.(할당한 부분을 체크한다.) -> manage_free.small[idx] |= (1 << fos);
+     - find_free_zone 에서는 READ / WRITE 작업을 실시한다.
+    ft_free 에서는 해제한 부분의 값을 변경한다. -> manage_free.small[index] &= ~(1 << meta->position);
+     - ft_free 에서는 WRITE 작업을 실시한다.
+
+- large[101]
+  * 사용되는 함수
+    void show_alloc_mem();
+    void init_meta_data(void *ptr ,size_t size);
+    void *ft_malloc(size_t size);
+    void ft_free(void *ptr);
+  * 하는 작업
+    show_alloc_mem 안에서는 사용중인 index 에 맞는 배열안의 주소를 가지고 와서 로 METADATA_t 변환후 METADATA_t 정보를 출력 하는 작업을 한다.
+     - show_alloc_mem 안에서는 READ 작업만 실시한다.
+    init_meta_data 에서는 index 에맞는 값을 읽고 비어 있다면 주소 값을 넣는다.
+     - init_meta_data 에서는 READ / WRITE 작업을 실시한다.
+    ft_malloc 에서는 flag 가 0일때 value를 memset 으로 초기화 해주는 작업을 실시한다.
+     - ft_malloc 에서는 READ / WRITE 작업을 실시한다.
+    ft_free 에서는 반납한 메모리의 주소가 들어 있는 값 을 0으로 초기화 해준다.
+
+- large_cnt
+  * 사용되는 함수
+    void *ft_malloc(size_t size);
+    void ft_free(void *ptr);
+  * 하는 작업
+    ft_malloc 에서는 large의 cnt 읽어서 범위를 확인 해준다.
+    매변 할당이 된다면 large_cnt를 증가 시켜준다.
+     - ft_malloc 에서는 READ / WRITE 작업을 실시한다.
+    ft_free 에서는 사용이 끝났다면 -1 을 해줘서 cnt 를 감소시켜준다.
+  
+  별표 static 변수를 사용하는 장소
+    * 사용되는 함수
+    long return_sc_pagesize();
+    long calculater_page_size(size_t size);
+    void *ft_malloc(size_t size);
+    * 사용되는 변수
+      - long return_sc_pagesize();
+          - static long _sc_page_size_cache;
+      - long calculater_page_size(size_t size);
+          - static int flag_tiny;
+          - static int flag_small;
+      - void *ft_malloc(size_t size);
+          - static char tiny_flag, small_flag, large_flag;
+
+  ```MARKDOWN
+  // AI 가 추천해준방법
+
+  ### 요약
+- **현재 상황 정리**
+  - `manage_free` 전역 상태(`_tiny`, `_small`, `tiny[]`, `small[]`, `large[]`, `large_cnt`)와 여러 `static` 플래그들이 모두 R/W되어 멀티스레드에서 데이터 레이스 위험이 큼.
+  - 함수별 역할: 비트맵 on/off, 메타데이터 갱신, `mmap/munmap` 호출, 통계 출력 등 대부분이 공유 상태를 건드림.
+
+- **권장 접근(정확성 우선)**
+  - **전역 락 한 번에 보호**: `ft_malloc`, `ft_free`, `ft_realloc`, `show_alloc_mem` 본문 전체를 `manage_free_mutex`로 감싸 정확성부터 확보.
+  - **조기 반환은 `goto out` 패턴**으로 정리해 언락 누락 방지.
+  - `find_free_zone`, `init_meta_data`는 “호출자가 이미 전역 락을 잡고 있음”을 전제로 내부에서 별도 락을 잡지 않음.
+
+- **부가 락(정적 캐시 보호)**
+  - `return_sc_pagesize`의 `_sc_page_size_cache`는 경쟁 초기화 방지를 위해 작은 락(`page_mutex`)으로 보호.
+  - `calculater_page_size`의 `flag_tiny`, `flag_small`도 작은 락(`calc_mutex`)으로 보호.
+  - 락 순서 규칙(교착 방지): `manage_free_mutex` → `calc_mutex` → `page_mutex` 방향만 허용. 반대로는 금지.
+
+- **매크로에 `do { ... } while (0)`을 쓰는 이유**
+  - 여러 문장짜리 매크로를 “한 문장처럼” 만들어 `if (...) MACRO(); else ...`에서의 매달린 `else` 문제 방지.
+  - 블록 스코프 부여(임시 변수 누수 방지), 성능 오버헤드 없음.
+
+- **성능 고려 팁**
+  - `show_alloc_mem`은 출력이 길 수 있으니, 필요 시 락 안에서 스냅샷을 로컬로 떠서 락을 빨리 해제한 뒤 출력.
+  - 성능 이슈가 실제로 생기면 2단계에서 락 세분화(`tiny_mutex`, `small_mutex`, `large_mutex`)를 검토. 반드시 고정된 락 획득 순서 유지.
+
+- **테스트**
+  - TSAN(`-fsanitize=thread`)로 데이터 레이스 확인.
+  - 멀티스레드 스트레스(무작위 `malloc/free/realloc/show_alloc_mem`)로 교착/경합 점검.
+
+- **질문에 대한 핵심 답변**
+  - 지금 구조에선 “반복되는 작은 락을 많이 만드는 것”보다, **API 단위로 한 번에 전역 락**이 안전하고 단순하며 유지보수에 유리함. 성능 문제가 드러나면 그때 세분화.
+
+  ```
+
+AI 는 지금 말하는게 내 코드는 전역 구조체를 사용하는데 이 구조체를 안쓰는 곳이 없기때문에 최대 장소인 ft_malloc 을 잠궈버리는 빙법을 추천한다.
+이렇게 하면 물론 thread 간의 data race는 발생하지 않지만 매우 느려지게 된다.
+
+
+```markdown
+
+### static inline 함수의 장단점
+- 장점
+  - **타입 안전**: 인자/리턴에 대해 컴파일 타임 타입 체크.
+  - **오버헤드 최소화**: 최적화 시 인라인되어 호출 오버헤드 거의 없음.
+  - **디버깅 용이**: 심볼/스택트레이스에 보이고 브레이크포인트 설정 가능.
+  - **단 한 번 평가**: 인자가 여러 번 평가되지 않음(부작용 안전).
+  - **헤더에 두기 좋음**: `static`으로 내부 연결; 여러 TU에서 중복 정의 문제 없이 사용 가능.
+
+- 단점
+  - **타입 고정**: 제네릭하게 쓰려면 오버로드(함수 여러 개)나 `void *`/매크로 등 보조 수단 필요.
+  - **바이너리 크기 증가 가능성**: 여러 TU에서 각각 인라인/발행되면 코드 복제 가능(보통 작은 함수는 영향 미미).
+  - **문장 합성 어려움**: 여러 문장을 “한 문장처럼” 만들기(특히 `if (...) foo(); else ...`)는 매크로만큼 유연하진 않음.
+
+### 매크로(예: LOCK/UNLOCK)의 장단점
+- 장점
+  - **문장처럼 사용**: `do { ... } while (0)`로 여러 문장을 한 문장처럼 안전하게 사용 가능.
+  - **0 오버헤드**: 텍스트 치환이므로 호출 비용 없음(인라인 함수와 유사).
+  - **문자열화/토큰 합치기**: `#`, `##`로 `__FILE__`, `__LINE__`, 인자 이름을 메시지에 쉽게 삽입.
+  - **타입 무관**: 어떤 타입 인자도 문법적으로만 맞으면 사용 가능.
+
+- 단점
+  - **타입 체크 없음**: 잘못된 인자도 통과; 버그 발견이 늦음.
+  - **다중 평가 위험**: 인자에 부작용이 있으면 예기치 않은 동작.
+  - **디버깅 불편**: 스택 트레이스/심볼에 안 보임, 브레이크포인트 걸기 어려움.
+  - **스코프/이름 오염**: 지역 변수 충돌 위험; 주의 깊은 네이밍/괄호화 필요.
+
+### 비교 요약
+- **안전성/가독성**: static inline 우위(타입 체크·디버깅 좋음).
+- **유연성(문장 합성·메타프로그래밍)**: 매크로 우위.
+- **성능**: 둘 다 사실상 동일(최적화 시 호출 제거). 차이는 미미.
+- **제네릭성**: 매크로가 쉽고, inline은 `_Generic`(C11)이나 여러 함수로 우회.
+
+### 실무 가이드
+- 락/언락처럼 단순 래핑: static inline 함수 권장.
+- 파일/라인을 메시지에 넣거나, 한 문장처럼 합쳐야 하는 복잡 매크로: 매크로 고려.
+- 혼용 시 원칙: 가능한 한 static inline 우선, 매크로는 꼭 필요할 때만.
+
+- 한 줄 결론: 타입 안전성과 디버깅을 중시하면 static inline, 문장 합성/메타프로그래밍이 필요하면 매크로.
+
+
+문제가 생겼다. ft_realloc에서 ft_malloc, ft_free 를 호출 한다. 각 함수는 mutex 를 건다. 하지만 realloc 에서도 
+공용으로 보는 구역이 존재 하기때문에 mutex를 걸어야한다. 아.... 
+
+
+```
+
+AI 가 추천하는방법
+```markdown
+간단 원리
+- 재귀 뮤텍스는 “소유한 스레드와 잠금 횟수”를 내부에 저장합니다.
+  - 같은 스레드가 다시 lock하면 카운터만 +1 되고 즉시 통과.
+  - unlock은 카운터 −1, 0이 되면 실제로 풀림.
+- 일반(기본) 뮤텍스는 소유 스레드가 다시 lock하면 대기에 걸려 자기 자신과 교착됩니다.
+
+static inline로 가능한가요?
+- 아니요. 재귀 동작은 뮤텍스 “타입/속성”으로 결정됩니다. `static inline`은 함수 인라이닝일 뿐, 뮤텍스의 동작을 바꾸지 못합니다.
+- 즉, 재귀를 쓰려면 반드시 재귀 타입으로 초기화해야 합니다.
+
+사용 예시
+```c
+// glibc 간단 초기화(리눅스 전용)
+static pthread_mutex_t manage_free_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+```
+
+또는 이식성 있게 런타임 초기화:
+```c
+static pthread_mutex_t manage_free_mutex;
+
+static void init_recursive_mutex(void) {
+  pthread_mutexattr_t a;
+  pthread_mutexattr_init(&a);
+  pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutex_init(&manage_free_mutex, &a);
+  pthread_mutexattr_destroy(&a);
+}
+```
+
+참고
+- `static inline` 헬퍼로 lock/unlock 래핑은 가능하지만, 재귀 가능 여부는 위 초기화로만 결정됩니다.
+```
+
+AI가 추천하는방법
+그냥 모든 함수위에서 mutex를 걸고 mutex가 걸린 친구만 그함수 안에서 일을 처리하게 해놓자.
+그러니까 multi thread 상황에서 trhead 한개가 작업이 끝날때까지 무식하게 다른 thread 는 작업(연산)을 못하게 만든다.
+효율성은 개나줬다.
+```markdown
+
+핵심 원리
+- 한 임계구역에서 원자적으로 처리: 공유 상태(`manage_free`, 메타데이터, 비트맵, large 리스트 등)를 건드리는 전체 연산(할당→복사→해제)을 하나의 뮤텍스로 감싸 “전부 혹은 전무(all-or-nothing)”로 보이게 합니다. 이렇게 하면 다른 스레드는 중간 상태를 절대 보지 못해 data race/불일치가 사라집니다.
+- 내부 구현은 무잠금: 임계구역(락)은 바깥 API에서만 잡고, 실제 로직은 락이 없는 내부 함수로 분리합니다. 그래야 중첩 잠금(교착) 없이 `realloc` 내부에서 `malloc`/`free` 동작을 재사용할 수 있습니다.
+
+개념 구조
+```c
+// 내부 구현(락 없음, 공용 로직)
+static void *malloc_impl(size_t size);
+static void  free_impl(void *ptr);
+static void *realloc_impl(void *ptr, size_t size);
+
+// 외부 API(락 담당)
+void *ft_malloc(size_t size){
+  LOCK(manage_free_mutex);
+  void *r = malloc_impl(size);
+  UNLOCK(manage_free_mutex);
+  return r;
+}
+void ft_free(void *ptr){
+  LOCK(manage_free_mutex);
+  free_impl(ptr);
+  UNLOCK(manage_free_mutex);
+}
+void *ft_realloc(void *ptr, size_t size){
+  LOCK(manage_free_mutex);
+  void *r = realloc_impl(ptr, size);  // 내부에서 malloc_impl/free_impl만 호출
+  UNLOCK(manage_free_mutex);
+  return r;
+}
+```
+- `realloc_impl` 예: `ptr==NULL`이면 `malloc_impl`, `size==0`이면 `free_impl` 후 NULL, 그 외엔 새 블록 `malloc_impl`→`memmove`→`free_impl`.
+
+왜 이렇게 해야 하나
+- 데이터 경쟁 방지: 임계구역 밖에서는 공유 상태에 손대지 않으므로 happens-before가 보장됩니다.
+- 교착 방지: 내부 구현은 락을 잡지 않으므로 API→API 재호출(중첩 잠금)이 사라집니다.
+- 일관성/원자성: `realloc`의 복합 동작이 끊기지 않고 한 번에 끝납니다.
+
+static을 붙이는 이유
+- 내부 연결(캡슐화): `malloc_impl/free_impl/realloc_impl`이 현재 `.c` 파일 안에서만 보이게 하여, 외부에서 락 우회 호출을 원천 차단.
+- 링크 충돌 방지: 동일 이름의 내부 헬퍼를 다른 파일에 둬도 심볼 충돌 없음.
+- 최적화 여지: 같은 번역 단위라 인라이닝/상수 전파 등 최적화가 유리.
+- 공개 인터페이스 최소화: 외부에 노출되는 심볼을 `ft_*`로만 제한해 유지보수성↑.
+
+요약
+- 락은 “API에서 한 번만” 잡고, 로직은 “무잠금 내부 함수”로 재사용.
+- 이렇게 해야 data race/교착 없이 `malloc`/`free`/`realloc`이 한 임계구역에서 원자적으로 수행됩니다.
+- `static`은 내부 구현을 숨겨 락 우회와 링크 문제를 막고 최적화에 유리합니다.
+
+추가 질문
+ -  근데 이해가 어려운게 있는데 지금 코드 최상단에서 lock 을 걸면 똑같은 상황아니야?
+답변
+아니요. “최상단에서 한 번만” 잠그는 건 맞지만, 그 안에서 무엇을 호출하느냐가 핵심입니다.
+
+- 올바른 경우(권장)
+  - 최상단에서 전역 락 한 번 획득 → 내부 무잠금 구현만 호출 → 마지막에 해제.
+  ```c
+  LOCK(manage_free_mutex);
+  void *r = realloc_impl(ptr, size); // 내부에서 malloc_impl/free_impl만 호출(무잠금)
+  UNLOCK(manage_free_mutex);
+  ```
+
+- 데드락 나는 경우
+  - 최상단에서 락을 잡은 뒤, 같은 락을 다시 잡는 API(`ft_malloc/ft_free`)를 호출하면 비재귀 뮤텍스에서는 교착됩니다.
+  ```c
+  LOCK(manage_free_mutex);
+  void *q = ft_malloc(n); // 내부에서 또 LOCK → 교착
+  UNLOCK(manage_free_mutex);
+  ```
+
+- 레이스 나는 경우
+  - 중간에 언락하고 `ft_malloc/ft_free`를 호출했다가 다시 락을 잡는 패턴은, 그 사이에 다른 스레드가 `ptr`/메타데이터를 바꿀 수 있어 UAF/이중해제/불일치가 생깁니다.
+  ```c
+  LOCK(manage_free_mutex);
+  // ... meta 확인 ...
+  UNLOCK(manage_free_mutex);
+  q = ft_malloc(n); // 그 사이 다른 스레드가 ptr 해제/변경 가능 → 위험
+  LOCK(manage_free_mutex);
+  ```
+
+- 예외적 대안
+  - 전역 락을 재귀 뮤텍스로 초기화하면, 최상단에서 락을 잡은 뒤 `ft_malloc/ft_free`(안에서도 같은 락) 호출이 가능합니다. 다만 구조적으로는 “API만 잠금 + 내부 무잠금 구현”이 더 깔끔합니다.
+
+요점
+- “최상단에서 한 번만” 잠그는 건 맞고, 그 안에서는 “락을 다시 잡지 않는 내부 구현(impl)”만 호출해야 같은 상황이 아닙니다(= 안전).
+
+```
+
+*/
+
+
+static void *malloc_impl(size_t size);
+static void *realloc_impl(void *ptr, size_t size);
+static void	*callo_imp(size_t nmemb, size_t size);
+static void  free_impl(void *ptr);
+
+void *ft_malloc(size_t size){
+  manage_free_mutex_lock(&manage_free_mutex);
+  void *reptr = malloc_impl(size);
+  manage_free_mutex_unlock(&manage_free_mutex);
+  return (reptr);
+}
+
+void ft_free(void *ptr){
+  manage_free_mutex_lock(&manage_free_mutex);
+  free_impl(ptr);
+  manage_free_mutex_unlock(&manage_free_mutex);
+}
+
+void *ft_realloc(void *ptr, size_t size){
+  manage_free_mutex_lock(&manage_free_mutex);
+  void *reptr = realloc_impl(ptr, size);
+  manage_free_mutex_unlock(&manage_free_mutex);
+  return (reptr);
+}
+
+void	*ft_calloc2(size_t nmemb, size_t size){
+  manage_free_mutex_lock(&manage_free_mutex);
+  void *reptr = callo_imp(nmemb, size);
+  manage_free_mutex_unlock(&manage_free_mutex);
+  return (reptr);
+}
 
 void show_alloc_mem(){
   size_t total_size = 0;
@@ -51,7 +431,7 @@ void show_alloc_mem(){
   ft_printf("Total size: %d byte\n", total_size);
 }
 
-void print_error(char *str){
+void print_error(const char *str){
   ft_fprintf(2, "Error %s : %s (errno = %d)\n", str, strerror(errno), errno);
   exit(EXIT_FAILURE);
 }
@@ -159,7 +539,7 @@ unsigned char find_free_zone(size_t size_type){
   unsigned char front, back, find, cnt = 0x00;
   unsigned char result = 0xFF;
 
-  if (size_type < TINY) {
+  if (size_type == TINY) {
     for (int idx = 0x00; idx < 0x0D; idx++) {
       for (int fos = 0x00; fos < 0x08 ; fos++) {
         if (cnt >= 100) {
@@ -177,7 +557,7 @@ unsigned char find_free_zone(size_t size_type){
       }
     }
   }
-  else if(size_type < SMALL){
+  else if(size_type == SMALL){
       for (int idx = 0x00; idx < 0x0D; idx++) {
         for (int fos = 0x00; fos < 0x08 ; fos++) {
           if (cnt >= 100) {
@@ -201,9 +581,10 @@ unsigned char find_free_zone(size_t size_type){
 /*
 메모리의 욺직임은 내가 만든 BLOCK 의 크기만큼 욺직이기때문에 행복하다.
 */
-void *ft_malloc(size_t size){
+static void *malloc_impl(size_t size){
   static char tiny_flag, small_flag, large_flag;
   long page_size;
+
 
   if (size <  1){
     size = 1;
@@ -216,12 +597,12 @@ void *ft_malloc(size_t size){
   //debug
   
   // show_alloc_mem();
-  page_size = calculater_page_size(size); //debug
-  if(page_size == -1){
-    return (NULL);
-  }
+  // page_size = calculater_page_size(size); //debug
+  // if(page_size == -1){
+  //   return (NULL);
+  // }
 
-  if (size < (TINY - METASIZE)) {
+  if (size <= (TINY - METASIZE)) {
     if (!tiny_flag){
       page_size = calculater_page_size(TINY);
       if(page_size == -1){
@@ -235,7 +616,7 @@ void *ft_malloc(size_t size){
       tiny_flag = 0x01;
     }
     unsigned char zone, front, back, index = 0x00;
-    zone = find_free_zone(size);
+    zone = find_free_zone(TINY);
     if (zone == 0xFF) {
       return (NULL);
     }
@@ -246,7 +627,7 @@ void *ft_malloc(size_t size){
     temp->client_size = size;
     return ((void *)(temp + 1));
   }
-  else if (size < (SMALL - METASIZE)) {
+  else if (size <= (SMALL - METASIZE)) {
     if (!small_flag) {
       page_size = calculater_page_size(SMALL);
       if(page_size == -1){
@@ -260,7 +641,7 @@ void *ft_malloc(size_t size){
       small_flag = 0x01;
     }
     unsigned char zone, front, back, index= 0x00;
-    zone = find_free_zone(size);
+    zone = find_free_zone(SMALL);
     if (zone == 0xFF) {
       return (NULL);
     }
@@ -297,7 +678,7 @@ void *ft_malloc(size_t size){
 
 /*
 */
-void ft_free(void *ptr){
+static void  free_impl(void *ptr){
   int size_type, index = 0;
 
   if (ptr == NULL){
@@ -313,10 +694,12 @@ void ft_free(void *ptr){
   if (size_type == TINY) {
     manage_free.tiny[index] &= ~(1 << meta->position);
     // meta->size = 0;
+    return ;
   }
   else if (size_type == SMALL) {
     manage_free.small[index] &= ~(1 << meta->position);
     // meta->size = 0;
+    return ;
   }
   else if (size_type > 0x200){
     int flag = 0;
@@ -328,6 +711,7 @@ void ft_free(void *ptr){
       print_error("munmap Fail");
     }
     manage_free.large_cnt -= 1;
+    return ;
   }
   else {
     return ;
@@ -374,17 +758,18 @@ ptr이 NULL이 아니라면, 그것은 이전에 malloc(), calloc(), 또는 real
  | large | large  | origin |
 */
 
-void *ft_realloc(void *ptr, size_t size){
+//여기까지 하고 있었음 
+static void *realloc_impl(void *ptr, size_t size){
   METADATA_t *meta;
   void *temp;
   size_t zone;
   
   if (ptr != NULL && size == 0) {
-    ft_free(ptr);
+    free_impl(ptr);
     return (NULL);
   }
   if (ptr == NULL) {
-    return (ft_malloc(size));
+    return (malloc_impl(size));
   }
   meta = (METADATA_t *)ptr - 1;
   zone = (meta->size & ~INDEX_MASK);
@@ -397,22 +782,26 @@ void *ft_realloc(void *ptr, size_t size){
       meta->client_size = size;
       return ((void *)(meta + 1));
     }
-    temp = ft_malloc(size);
+    temp = malloc_impl(size);
     if (temp == NULL) {
       return (NULL);
     }
-    temp = ft_memmove(temp, ptr, meta->client_size);
-    ft_free(ptr);
+    size_t client_size_temp = meta->client_size;
+    size_t copy = client_size_temp < size ? client_size_temp : size;
+    temp = ft_memmove(temp, ptr, copy);
+    free_impl(ptr);
     return (temp);
   }
   else {
     if (zone < size + 1) {
-      temp = ft_malloc(size);
+      temp = malloc_impl(size);
       if (temp == NULL) {
         return (NULL);
       }
-      temp = ft_memmove(temp, ptr, meta->client_size);
-      ft_free(ptr);
+      size_t client_size_temp = meta->client_size;
+      size_t copy = client_size_temp < size ? client_size_temp : size;
+      temp = ft_memmove(temp, ptr, copy);
+      free_impl(ptr);
       return (temp);
     }
     meta->client_size = size;
@@ -421,16 +810,16 @@ void *ft_realloc(void *ptr, size_t size){
   return (NULL);
 }
 
-void	*ft_calloc2(size_t nmemb, size_t size){
+static void	*callo_imp(size_t nmemb, size_t size){
   void	*reptr;
 	size_t	total;
 
   if (nmemb == 0 || size == 0)
-    return (ft_malloc(0));
+    return (malloc_impl(0));
 	total = nmemb * size;
 	if (total != 0 && total / nmemb != size)
 		return (NULL);
-	reptr = (void *)ft_malloc(size * nmemb);
+	reptr = (void *)malloc_impl(size * nmemb);
 	if (reptr == NULL) {
     return (NULL);
   };

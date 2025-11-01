@@ -3,6 +3,7 @@
 
 #include "../libft/libft.h"
 #include "../printf/libftprintf.h"
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -10,6 +11,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stddef.h>
+#include <string.h>
 
 
 #define DEFAULTSIZE 0x10 //16
@@ -47,7 +49,7 @@ typedef struct FREEDATA_s {
 
 void show_alloc_mem(void);
 // 다시 내가 error 를 출력하는 print 를 재정의 할 것.
-void print_error(char *str);
+void print_error(const char *str);
 //static 을 사용 해서 cache 를 만들었기때문에 단 한번 systemcall 을 사용한다.
 long return_sc_pagesize(void);
 //page를 카운트 하기위한
@@ -69,4 +71,14 @@ void  *malloc(size_t size);
 void  free(void *ptr);
 void  *realloc(void *ptr, size_t size);
 void	*calloc(size_t nmemb, size_t size);
+
+//multi thread를 방지하기 위해서 만드는 static inline 
+static inline void manage_free_mutex_lock(pthread_mutex_t *m){
+  if (pthread_mutex_lock(m) != 0) print_error("pthread_mutex_lock Error");
+}
+
+static inline void manage_free_mutex_unlock(pthread_mutex_t *m){
+  if (pthread_mutex_unlock(m) != 0) print_error("pthread_mutex_unlock Error");
+}
+
 #endif

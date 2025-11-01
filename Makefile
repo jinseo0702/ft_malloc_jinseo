@@ -5,7 +5,9 @@ endif
 CC = gcc
 AR = ar rcs
 PIC_FLAG = -fPIC
-CFLAG = -g -Wall -Wextra -Werror -Iinclude -Iprintf -Ilibft
+# CFLAG = -g -Wall -Wextra -Werror -Iinclude -Iprintf -Ilibft
+CFLAG = -g -pthread -Wall -Wextra -Werror -Iinclude -Iprintf -Ilibft
+# CFLAG = -fsanitize=thread -g -O0 -fno-omit-frame-pointer -pthread -Iinclude -Iprintf -Ilibft
 RM = rm -rf
 
 SRC = src/ft_malloc.c \

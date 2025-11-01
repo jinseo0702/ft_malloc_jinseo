@@ -6,7 +6,7 @@ LIBFT_PATH = ../libft/libft.a
 AR = ar -rcs
 RM = rm -rf
 
-SRC = testzero.c
+SRC = testMalloc.c
 OBJ = $(SRC:.c=.o)
 NAME = testMalloc
 
