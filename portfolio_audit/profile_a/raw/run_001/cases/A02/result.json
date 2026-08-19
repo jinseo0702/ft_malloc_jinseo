@@ -1,0 +1,18 @@
+{
+  "classification": "PASS",
+  "description": "LD_PRELOAD malloc/free smoke",
+  "execution": {
+    "command": [
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/preload_smoke"
+    ],
+    "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/preload_smoke\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 0,
+    "return_code": 0,
+    "timed_out": false
+  },
+  "facts": {},
+  "id": "A02",
+  "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A02",
+  "reason": "semantic assertions passed"
+}

@@ -1,0 +1,67 @@
+{
+  "case_id": "A30_FOREIGN",
+  "executions": 10,
+  "label": "invalid_free_repeat",
+  "records": [
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 1,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 2,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 3,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 4,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 5,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 6,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 7,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 8,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 9,
+      "totals": []
+    },
+    {
+      "foreign_alias": true,
+      "return_code": 0,
+      "run": 10,
+      "totals": []
+    }
+  ]
+}

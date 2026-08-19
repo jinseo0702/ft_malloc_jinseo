@@ -1,0 +1,19 @@
+{
+  "classification": "PASS",
+  "description": "controlled multi-thread integrity",
+  "execution": {
+    "command": [
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+      "A29"
+    ],
+    "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A29\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 5,
+    "return_code": 0,
+    "timed_out": false
+  },
+  "facts": {},
+  "id": "A29",
+  "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A29",
+  "reason": "semantic assertions passed"
+}

@@ -1,0 +1,114 @@
+[
+  {
+    "command": [
+      "make",
+      "-C",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/libft",
+      "EXTRA_CFLAG=-fPIC"
+    ],
+    "command_text": "\"make\" \"-C\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/libft\" \"EXTRA_CFLAG=-fPIC\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 902,
+    "return_code": 0,
+    "timed_out": false
+  },
+  {
+    "command": [
+      "make",
+      "-C",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/printf",
+      "EXTRA_CFLAG=-fPIC"
+    ],
+    "command_text": "\"make\" \"-C\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/printf\" \"EXTRA_CFLAG=-fPIC\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 147,
+    "return_code": 0,
+    "timed_out": false
+  },
+  {
+    "command": [
+      "make",
+      "-C",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo"
+    ],
+    "command_text": "\"make\" \"-C\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 78,
+    "return_code": 0,
+    "timed_out": false
+  },
+  {
+    "command": [
+      "gcc",
+      "-std=gnu11",
+      "-g",
+      "-pthread",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fPIC",
+      "-I",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/include",
+      "-I",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/printf",
+      "-I",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/libft",
+      "-c",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/src/ft_malloc.c",
+      "-o",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/ft_malloc_direct.o"
+    ],
+    "command_text": "\"gcc\" \"-std=gnu11\" \"-g\" \"-pthread\" \"-Wall\" \"-Wextra\" \"-Werror\" \"-fPIC\" \"-I\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/include\" \"-I\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/printf\" \"-I\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/libft\" \"-c\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/src/ft_malloc.c\" \"-o\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/ft_malloc_direct.o\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 39,
+    "return_code": 0,
+    "timed_out": false
+  },
+  {
+    "command": [
+      "gcc",
+      "-std=gnu11",
+      "-g",
+      "-pthread",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/include",
+      "-I",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/printf",
+      "-I",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/libft",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/tests/direct_cases.c",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/ft_malloc_direct.o",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/libft/libft.a",
+      "/tmp/ft_malloc_profile_a.zn393mmh/repo/printf/libftprintf.a",
+      "-o",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases"
+    ],
+    "command_text": "\"gcc\" \"-std=gnu11\" \"-g\" \"-pthread\" \"-Wall\" \"-Wextra\" \"-Werror\" \"-I\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/include\" \"-I\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/printf\" \"-I\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/libft\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/tests/direct_cases.c\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/ft_malloc_direct.o\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/libft/libft.a\" \"/tmp/ft_malloc_profile_a.zn393mmh/repo/printf/libftprintf.a\" \"-o\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 66,
+    "return_code": 0,
+    "timed_out": false
+  },
+  {
+    "command": [
+      "gcc",
+      "-std=gnu11",
+      "-O0",
+      "-g",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/tests/preload_smoke.c",
+      "-o",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/preload_smoke"
+    ],
+    "command_text": "\"gcc\" \"-std=gnu11\" \"-O0\" \"-g\" \"-Wall\" \"-Wextra\" \"-Werror\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/tests/preload_smoke.c\" \"-o\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/preload_smoke\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 29,
+    "return_code": 0,
+    "timed_out": false
+  }
+]

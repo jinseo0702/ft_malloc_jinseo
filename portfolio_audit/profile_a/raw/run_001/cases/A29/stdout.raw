@@ -1,0 +1,3 @@
+threads=4
+iterations_per_thread=500
+integrity=1

@@ -1,0 +1,759 @@
+{
+  "counts": {
+    "CRASH": 0,
+    "FAIL": 1,
+    "PARTIAL": 1,
+    "PASS": 28
+  },
+  "environment_retries": {
+    "cases": [
+      "A26",
+      "A27"
+    ],
+    "count": 2,
+    "reason": "sandbox ptrace denial",
+    "resolved": true
+  },
+  "executed_cases": 30,
+  "harness_validation": {
+    "all_detected": true,
+    "detected": 5,
+    "executed": 5,
+    "initial_attempt_detected": 4,
+    "initial_attempt_note": "first A27 mutation removed a startup munmap outside the marked target region; mutation builder was corrected and rerun",
+    "planned": 5
+  },
+  "page_size": 4096,
+  "planned_cases": 30,
+  "profile": "PROFILE A",
+  "repeat_verification": {
+    "A28": {
+      "correct_snapshots": 2,
+      "executions": 10,
+      "mismatched_snapshots": 8,
+      "observed_totals": [
+        [
+          710,
+          600
+        ],
+        [
+          710,
+          610
+        ],
+        [
+          700,
+          610
+        ],
+        [
+          710,
+          600
+        ],
+        [
+          700,
+          610
+        ],
+        [
+          700,
+          610
+        ],
+        [
+          700,
+          610
+        ],
+        [
+          700,
+          610
+        ],
+        [
+          700,
+          600
+        ],
+        [
+          710,
+          610
+        ]
+      ]
+    },
+    "A30_FOREIGN": {
+      "executions": 10,
+      "live_alias_observed": 10
+    }
+  },
+  "results": [
+    {
+      "classification": "PASS",
+      "description": "direct ft_malloc/write/free smoke",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A01"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A01\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A01",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A01",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "LD_PRELOAD malloc/free smoke",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/preload_smoke"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/preload_smoke\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A02",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A02",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "malloc zero-size semantics",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A03"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A03\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A03",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A03",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "1-byte TINY extent",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A04"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A04\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A04",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A04",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "80-byte TINY boundary",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A05"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A05\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A05",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A05",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "81-byte SMALL boundary",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A06"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A06\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A06",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A06",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "496-byte SMALL boundary",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A07"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A07\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A07",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A07",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "497-byte LARGE boundary",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A08"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A08\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A08",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A08",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "max_align_t alignment across classes",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A09"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A09\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {
+        "remainders": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "id": "A09",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A09",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "calloc zero initialization",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A10"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A10\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {
+        "zero_bytes": 221
+      },
+      "id": "A10",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A10",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "calloc multiplication overflow",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A11"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A11\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A11",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A11",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "calloc zero operands",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A12"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A12\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A12",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A12",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "free NULL",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A13"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A13\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A13",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A13",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "TINY first-free reuse",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A14"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A14\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {
+        "reused": true
+      },
+      "id": "A14",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A14",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "SMALL first-free reuse",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A15"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A15\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A15",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A15",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "TINY capacity and recovery",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A16"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A16\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A16",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A16",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "SMALL capacity and recovery",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A17"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A17\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A17",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A17",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "LARGE capacity and recovery",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A18"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A18\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A18",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A18",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "realloc NULL",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A19"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A19\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A19",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A19",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "realloc zero and slot reuse",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A20"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A20\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A20",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A20",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "TINY in-zone realloc",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A21"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A21\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A21",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A21",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "TINY-to-SMALL realloc",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A22"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A22\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A22",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A22",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "SMALL-to-LARGE realloc",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A23"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A23\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {
+        "old_slot_reused": true,
+        "prefix": 400
+      },
+      "id": "A23",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A23",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "LARGE shrink realloc",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A24"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A24\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A24",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A24",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "realloc failure preserves original",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A25"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A25\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A25",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A25",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "fixed-arena mapping growth",
+      "execution": {
+        "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26",
+        "rerun": true,
+        "rerun_reason": "initial sandbox denied ptrace; repeated with approved strace permission",
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {
+        "mmap_lengths": [
+          12288,
+          53248
+        ],
+        "small_arena_length": 53248,
+        "small_arena_mmaps": 1,
+        "tiny_arena_length": 12288,
+        "tiny_arena_mmaps": 1
+      },
+      "id": "A26",
+      "initial_execution": {
+        "command": [
+          "strace",
+          "-qq",
+          "-s",
+          "256",
+          "-e",
+          "trace=mmap,munmap,write",
+          "-o",
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26/strace.raw",
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A26"
+        ],
+        "command_text": "\"strace\" \"-qq\" \"-s\" \"256\" \"-e\" \"trace=mmap,munmap,write\" \"-o\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26/strace.raw\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A26\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 1,
+        "return_code": 1,
+        "timed_out": false
+      },
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PASS",
+      "description": "LARGE mmap/munmap balance",
+      "execution": {
+        "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27",
+        "rerun": true,
+        "rerun_reason": "initial sandbox denied ptrace; repeated with approved strace permission",
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {
+        "pairs_match": true,
+        "successful_mmaps": 10,
+        "successful_munmaps": 10
+      },
+      "id": "A27",
+      "initial_execution": {
+        "command": [
+          "strace",
+          "-qq",
+          "-s",
+          "256",
+          "-e",
+          "trace=mmap,munmap,write",
+          "-o",
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27/strace.raw",
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A27"
+        ],
+        "command_text": "\"strace\" \"-qq\" \"-s\" \"256\" \"-e\" \"trace=mmap,munmap,write\" \"-o\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27/strace.raw\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A27\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 1,
+        "return_code": 1,
+        "timed_out": false
+      },
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "FAIL",
+      "description": "show_alloc_mem accounting",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A28"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A28\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {
+        "first_snapshot_ok": false,
+        "first_totals": [
+          700
+        ],
+        "second_snapshot_ok": true,
+        "second_totals": [
+          610
+        ]
+      },
+      "id": "A28",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A28",
+      "reason": "show_alloc_mem membership/total mismatch"
+    },
+    {
+      "classification": "PASS",
+      "description": "controlled multi-thread integrity",
+      "execution": {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A29"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A29\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 5,
+        "return_code": 0,
+        "timed_out": false
+      },
+      "facts": {},
+      "id": "A29",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A29",
+      "reason": "semantic assertions passed"
+    },
+    {
+      "classification": "PARTIAL",
+      "description": "invalid/double-free non-contract robustness",
+      "execution": {
+        "command": [
+          [
+            "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+            "A30_FOREIGN"
+          ],
+          [
+            "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+            "A30_DOUBLE"
+          ]
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_FOREIGN\" ; \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_DOUBLE\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "subprocesses": [
+          {
+            "command": [
+              "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+              "A30_FOREIGN"
+            ],
+            "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_FOREIGN\"",
+            "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+            "duration_ms": 0,
+            "return_code": 0,
+            "timed_out": false
+          },
+          {
+            "command": [
+              "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+              "A30_DOUBLE"
+            ],
+            "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_DOUBLE\"",
+            "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+            "duration_ms": 0,
+            "return_code": 0,
+            "timed_out": false
+          }
+        ],
+        "timed_out": false
+      },
+      "facts": {
+        "double_free_completed": true,
+        "foreign_free_created_live_alias": true,
+        "non_contract": true
+      },
+      "id": "A30",
+      "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A30",
+      "reason": "NON-CONTRACT invalid free can corrupt live-slot ownership"
+    }
+  ],
+  "run_id": "run_001",
+  "schema_version": 1,
+  "setup_error": 0,
+  "source_hashes_unchanged": true
+}

@@ -1,0 +1,53 @@
+{
+  "all_detected": true,
+  "detected": 5,
+  "executed": 5,
+  "mutations": [
+    {
+      "case_id": "A09",
+      "description": "non-zero alignment remainder",
+      "detected": true,
+      "mutated_classification": "FAIL",
+      "mutated_raw": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/harness_validation_retry/A09.stdout.mutated.raw",
+      "mutated_reason": "alignment remainder mismatch",
+      "original_classification": "PASS"
+    },
+    {
+      "case_id": "A10",
+      "description": "missing calloc zero byte",
+      "detected": true,
+      "mutated_classification": "FAIL",
+      "mutated_raw": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/harness_validation_retry/A10.stdout.mutated.raw",
+      "mutated_reason": "calloc zero/writable evidence mismatch",
+      "original_classification": "PASS"
+    },
+    {
+      "case_id": "A14",
+      "description": "wrong reuse pointer relation",
+      "detected": true,
+      "mutated_classification": "FAIL",
+      "mutated_raw": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/harness_validation_retry/A14.stdout.mutated.raw",
+      "mutated_reason": "TINY first-free pointer was not reused",
+      "original_classification": "PASS"
+    },
+    {
+      "case_id": "A23",
+      "description": "corrupted realloc prefix evidence",
+      "detected": true,
+      "mutated_classification": "FAIL",
+      "mutated_raw": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/harness_validation_retry/A23.stdout.mutated.raw",
+      "mutated_reason": "SMALL-to-LARGE preservation/reuse mismatch",
+      "original_classification": "PASS"
+    },
+    {
+      "case_id": "A27",
+      "description": "missing munmap event",
+      "detected": true,
+      "mutated_classification": "FAIL",
+      "mutated_raw": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/harness_validation_retry/A27.trace.mutated.raw",
+      "mutated_reason": "LARGE mmap/munmap lifecycle mismatch",
+      "original_classification": "PASS"
+    }
+  ],
+  "planned": 5
+}

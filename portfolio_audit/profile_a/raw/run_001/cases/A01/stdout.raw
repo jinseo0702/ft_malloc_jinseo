@@ -1,0 +1,4 @@
+zone=TINY
+size=32
+ptr_nonnull=1
+extent_ok=1

@@ -1,0 +1,8 @@
+{
+  "Makefile": "18d485f79c2d3a70380c02b728e7ad1b2364625f1392df69adf7f0d79c7cbfd4",
+  "README.md": "9ac3a3082524ef8f83bc7529d759ebb91195675b3b7b752c7ad50eb627b90dd8",
+  "include/ft_malloc.h": "625485d579e957a3b642b3ebade048cf197de752618e5d82c3fcca43f5ab4fff",
+  "src/ft_malloc.c": "98b938353cc1fa40261d3750b35c65d4b31b0c199192c8066449f4503ecc5bee",
+  "src/ft_malloc_ver.0.1.c": "9dc55534d2cec1f2a1cb39577e0650d96b6b16cec53224d08085cbaf0aee4fe9",
+  "src/ft_override.c": "07c6f7aca2757cd9f725cc1d28476416f682b7306ac460ff2d66444445047209"
+}

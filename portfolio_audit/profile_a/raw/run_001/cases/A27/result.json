@@ -1,0 +1,38 @@
+{
+  "classification": "PASS",
+  "description": "LARGE mmap/munmap balance",
+  "execution": {
+    "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27",
+    "rerun": true,
+    "rerun_reason": "initial sandbox denied ptrace; repeated with approved strace permission",
+    "return_code": 0,
+    "timed_out": false
+  },
+  "facts": {
+    "pairs_match": true,
+    "successful_mmaps": 10,
+    "successful_munmaps": 10
+  },
+  "id": "A27",
+  "initial_execution": {
+    "command": [
+      "strace",
+      "-qq",
+      "-s",
+      "256",
+      "-e",
+      "trace=mmap,munmap,write",
+      "-o",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27/strace.raw",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+      "A27"
+    ],
+    "command_text": "\"strace\" \"-qq\" \"-s\" \"256\" \"-e\" \"trace=mmap,munmap,write\" \"-o\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27/strace.raw\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A27\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 1,
+    "return_code": 1,
+    "timed_out": false
+  },
+  "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A27",
+  "reason": "semantic assertions passed"
+}

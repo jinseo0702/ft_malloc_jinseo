@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "recorded_date": "2026-08-19",
+  "target_repository": "ft_malloc_jinseo",
+  "requested_profile": "PROFILE B — gnu_nm_project",
+  "applicability_gate": {
+    "id": "B-GATE-01",
+    "executions": 2,
+    "stable_result_across_executions": true,
+    "classification": "PROFILE NOT APPLICABLE",
+    "reason": "no_production_elf_input_symbol_output_command",
+    "isolated_build_exit": 0,
+    "artifact_present": true,
+    "artifact_is_shared_object": true,
+    "production_main_matches": 0,
+    "elf_parser_signal_matches": 0,
+    "target_command_available": false
+  },
+  "oracle": {
+    "name": "GNU nm",
+    "version": "GNU Binutils for Ubuntu 2.46",
+    "invoked_for_target_comparison": false
+  },
+  "semantic_suite": {
+    "planned_cases": 20,
+    "executed_cases": 0,
+    "excluded_by_applicability_gate": 20,
+    "pass": 0,
+    "partial": 0,
+    "fail": 0,
+    "crash": 0,
+    "setup_error": 0
+  },
+  "harness_validation": {
+    "planned_mutations": 5,
+    "executed_mutations": 0,
+    "status": "NOT RUN",
+    "reason": "no semantic target harness exists because the applicability gate did not pass"
+  },
+  "failure_analysis": {
+    "analyzed_failures": 0,
+    "reason": "no semantic target cases were executed and no target FAIL/PARTIAL/CRASH result exists"
+  }
+}

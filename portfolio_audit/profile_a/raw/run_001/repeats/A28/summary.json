@@ -1,0 +1,97 @@
+{
+  "case_id": "A28",
+  "executions": 10,
+  "label": "show_alloc_mem_repeat",
+  "records": [
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 1,
+      "totals": [
+        710,
+        600
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 2,
+      "totals": [
+        710,
+        610
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 3,
+      "totals": [
+        700,
+        610
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 4,
+      "totals": [
+        710,
+        600
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 5,
+      "totals": [
+        700,
+        610
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 6,
+      "totals": [
+        700,
+        610
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 7,
+      "totals": [
+        700,
+        610
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 8,
+      "totals": [
+        700,
+        610
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 9,
+      "totals": [
+        700,
+        600
+      ]
+    },
+    {
+      "foreign_alias": false,
+      "return_code": 0,
+      "run": 10,
+      "totals": [
+        710,
+        610
+      ]
+    }
+  ]
+}

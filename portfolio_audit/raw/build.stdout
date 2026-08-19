@@ -1,0 +1,14 @@
+make: Entering directory '/tmp/ft_malloc_profile_b_gate.I8qc2A/repo'
+make[1]: Entering directory '/tmp/ft_malloc_profile_b_gate.I8qc2A/repo/libft'
+make[1]: Leaving directory '/tmp/ft_malloc_profile_b_gate.I8qc2A/repo/libft'
+make[1]: Entering directory '/tmp/ft_malloc_profile_b_gate.I8qc2A/repo/printf'
+gcc -g -Wall -Wextra -Werror -fPIC -c ft_memset.c -o ft_memset.o
+gcc -g -Wall -Wextra -Werror -fPIC -c ft_fprintf.c -o ft_fprintf.o
+gcc -g -Wall -Wextra -Werror -fPIC -c ft_printf.c -o ft_printf.o
+gcc -g -Wall -Wextra -Werror -fPIC -c ft_putchar.c -o ft_putchar.o
+gcc -g -Wall -Wextra -Werror -fPIC -c ft_putstr.c -o ft_putstr.o
+gcc -g -Wall -Wextra -Werror -fPIC -c ft_putaddress.c -o ft_putaddress.o
+gcc -g -Wall -Wextra -Werror -fPIC -c ft_putnbr.c -o ft_putnbr.o
+ar -rcs libftprintf.a ft_memset.o ft_fprintf.o ft_printf.o ft_putchar.o ft_putstr.o ft_putaddress.o ft_putnbr.o
+make[1]: Leaving directory '/tmp/ft_malloc_profile_b_gate.I8qc2A/repo/printf'
+make: Leaving directory '/tmp/ft_malloc_profile_b_gate.I8qc2A/repo'

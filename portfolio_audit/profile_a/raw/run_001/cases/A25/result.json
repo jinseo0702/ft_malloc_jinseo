@@ -1,0 +1,19 @@
+{
+  "classification": "PASS",
+  "description": "realloc failure preserves original",
+  "execution": {
+    "command": [
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+      "A25"
+    ],
+    "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A25\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 0,
+    "return_code": 0,
+    "timed_out": false
+  },
+  "facts": {},
+  "id": "A25",
+  "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A25",
+  "reason": "semantic assertions passed"
+}

@@ -1,0 +1,53 @@
+{
+  "classification": "PARTIAL",
+  "description": "invalid/double-free non-contract robustness",
+  "execution": {
+    "command": [
+      [
+        "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+        "A30_FOREIGN"
+      ],
+      [
+        "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+        "A30_DOUBLE"
+      ]
+    ],
+    "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_FOREIGN\" ; \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_DOUBLE\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 0,
+    "return_code": 0,
+    "subprocesses": [
+      {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A30_FOREIGN"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_FOREIGN\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      },
+      {
+        "command": [
+          "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+          "A30_DOUBLE"
+        ],
+        "command_text": "\"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A30_DOUBLE\"",
+        "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+        "duration_ms": 0,
+        "return_code": 0,
+        "timed_out": false
+      }
+    ],
+    "timed_out": false
+  },
+  "facts": {
+    "double_free_completed": true,
+    "foreign_free_created_live_alias": true,
+    "non_contract": true
+  },
+  "id": "A30",
+  "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A30",
+  "reason": "NON-CONTRACT invalid free can corrupt live-slot ownership"
+}

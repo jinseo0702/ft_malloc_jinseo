@@ -1,0 +1,43 @@
+{
+  "classification": "PASS",
+  "description": "fixed-arena mapping growth",
+  "execution": {
+    "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26",
+    "rerun": true,
+    "rerun_reason": "initial sandbox denied ptrace; repeated with approved strace permission",
+    "return_code": 0,
+    "timed_out": false
+  },
+  "facts": {
+    "mmap_lengths": [
+      12288,
+      53248
+    ],
+    "small_arena_length": 53248,
+    "small_arena_mmaps": 1,
+    "tiny_arena_length": 12288,
+    "tiny_arena_mmaps": 1
+  },
+  "id": "A26",
+  "initial_execution": {
+    "command": [
+      "strace",
+      "-qq",
+      "-s",
+      "256",
+      "-e",
+      "trace=mmap,munmap,write",
+      "-o",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26/strace.raw",
+      "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases",
+      "A26"
+    ],
+    "command_text": "\"strace\" \"-qq\" \"-s\" \"256\" \"-e\" \"trace=mmap,munmap,write\" \"-o\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26/strace.raw\" \"/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/bin/direct_cases\" \"A26\"",
+    "cwd": "/home/jinseo/duo/ft_malloc_jinseo",
+    "duration_ms": 1,
+    "return_code": 1,
+    "timed_out": false
+  },
+  "raw_directory": "/home/jinseo/duo/ft_malloc_jinseo/portfolio_audit/profile_a/raw/run_001/cases/A26",
+  "reason": "semantic assertions passed"
+}
