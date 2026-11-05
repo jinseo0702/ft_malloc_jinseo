@@ -48,6 +48,8 @@ CASE_DESCRIPTIONS = {
     "A28": "show_alloc_mem accounting",
     "A29": "controlled multi-thread integrity",
     "A30": "invalid/double-free non-contract robustness",
+    "A31": "realloc from a full 496-byte SMALL slot to 510 bytes",
+    "A32": "calloc size overflow in multiplication and mapping length",
 }
 
 
@@ -374,8 +376,8 @@ def main() -> int:
         page_size = int(os.sysconf("SC_PAGE_SIZE"))
         binaries = build_suite(repo_root, profile_root, raw_root, copy_root)
         results = [
-            run_case(f"A{index:02d}", binaries, repo_root, raw_root, page_size)
-            for index in range(1, 31)
+            run_case(case_id, binaries, repo_root, raw_root, page_size)
+            for case_id in CASE_DESCRIPTIONS
         ]
         after_manifest = {str(path.relative_to(repo_root)): sha256(path) for path in source_paths}
         write_json(raw_root / "source_hashes.after.json", after_manifest)
@@ -386,7 +388,7 @@ def main() -> int:
             "run_id": "run_001",
             "page_size": page_size,
             "source_hashes_unchanged": manifest == after_manifest,
-            "planned_cases": 30,
+            "planned_cases": len(CASE_DESCRIPTIONS),
             "executed_cases": len(results),
             "counts": {name: counts.get(name, 0) for name in ("PASS", "PARTIAL", "FAIL", "CRASH")},
             "setup_error": 0,
@@ -398,7 +400,7 @@ def main() -> int:
             "counts": summary["counts"],
             "source_hashes_unchanged": summary["source_hashes_unchanged"],
         }, sort_keys=True))
-        return 0
+        return 1 if counts.get("FAIL") or counts.get("CRASH") else 0
     except Exception as error:
         write_text(raw_root / "setup_error.txt", f"{type(error).__name__}: {error}\n")
         print(f"setup error: {error}", file=sys.stderr)

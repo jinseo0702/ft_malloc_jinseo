@@ -1,8 +1,11 @@
 #include "../include/ft_malloc.h"
+#include <limits.h>
 #include <stdint.h>
 
 //impl은 implementation(구현)의 줄임말입니다. 보통 함수 이름에 붙여 “내부 구현 함수”라는 뜻으로 씁니다.
 FREEDATA_t manage_free;
+/* Exact requested length for each LARGE mapping, indexed by its ownership slot. */
+static size_t large_request_sizes[sizeof(manage_free.large) / sizeof(manage_free.large[0])];
 static pthread_mutex_t manage_free_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
@@ -495,6 +498,10 @@ long calculater_page_size(size_t size) {
     return (-1);
   }
   PAGE_SIZE = return_sc_pagesize();
+  if (size > (size_t)LONG_MAX - (PAGE_SIZE - 1)) {
+    errno = ENOMEM;
+    return -1;
+  }
   PAGE_MASK = ~(PAGE_SIZE - 1);
   if (size == TINY && !flag_tiny) {
     PAGE_COUNT = ((TINY * 0x64) + (PAGE_SIZE - 1)) & PAGE_MASK;
@@ -707,7 +714,11 @@ static void *malloc_impl(size_t size){
         ft_memset(manage_free.large, 0, sizeof(manage_free.large));
         large_flag |= (0x01);
       }
-      page_size = calculater_page_size(size + METASIZE);
+      if (size > SIZE_MAX - sizeof(METADATA_t)) {
+        errno = ENOMEM;
+        return NULL;
+      }
+      page_size = calculater_page_size(size + sizeof(METADATA_t));
       if(page_size == -1){
         return (NULL);
       }
@@ -718,6 +729,7 @@ static void *malloc_impl(size_t size){
       init_meta_data(ptr, page_size);
       METADATA_t *temp = (METADATA_t *)ptr;
       temp->client_size = size;
+      large_request_sizes[(size_t)temp->position] = size;
       manage_free.large_cnt++;
       return ((void *)(temp + 1));
     }
@@ -781,117 +793,54 @@ static void free_impl(void *ptr)
   if (munmap(meta, meta->size) < 0)
     print_error("munmap Fail");
   manage_free.large[owner.slot] = 0;
+  large_request_sizes[owner.slot] = 0;
   --manage_free.large_cnt;
 }
 
-/*
-realloc() 함수는 ptr이 가리키는 메모리 블록의 크기를 size 바이트로 변경합니다. 
-내용은 영역의 시작점부터 이전 크기와 새 크기 중 더 작은 값(minimum)까지의 범위에서 변경되지 않은 상태로 유지됩니다. 
-만약 새 크기가 이전 크기보다 크다면, 추가된 메모리는 초기화되지 않습니다. 
-
-만약 ptr이 NULL이라면, 그 호출은 모든 size 값에 대해 malloc(size)와 동일합니다;
-만약 size가 0이고 ptr이 NULL이 아니라면, 
-그 호출은 free(ptr)과 동일합니다. 
-ptr이 NULL이 아니라면, 그것은 이전에 malloc(), calloc(), 또는 realloc() 호출에 의해 반환된 값이어야 합니다.
-만약 가리키던 영역이 이동되었다면, free(ptr)이 수행됩니다.
-
-같은 zone 이라면 meta data만 변경됩니다.
-만약 small zone 에서 tiny 존의 변경이라면 그냥 small zone을 사용하고 meta data 만 변경됩니다.
-만약 작은 zone 에서 더 큰 존으로 간다면 data는 보존이되고 작은 zone 의 memory 는 free(*beforezone) 이 되어야한다.
-
- |  ptr  | size |       do      |
- | NULL  | ?    |  malloc(size) |
- |!=NULL | ==0  |  free(ptr)    |
- 
- 반환 값
- realloc() 함수는 새로 할당된 메모리에 대한 포인터를 반환하며, 
- 이 포인터는 어떤 내장 타입(built-in type)에도 적합하게 정렬(aligned)되어 있습니다. 
- 요청이 실패하면 NULL을 반환합니다. 
- 반환된 포인터는, 만약 할당이 이동되지 않았다면 (예: 그 자리에서(in-place) 할당을 확장할 공간이 있었다면) ptr과 같을 수도 있고, 
- 할당이 새 주소로 이동되었다면 ptr과 다를 수도 있습니다. 
- 만약 size가 0이었다면, NULL 또는 free()에 전달하기 적합한 포인터가 반환됩니다. 
- 만약 realloc()이 실패하면, 원본 블록은 건드려지지 않은 상태로 남습니다; 그것은 해제(freed)되거나 이동되지 않습니다.
-
- |  size | meta   | return |
- | tiny  | tiny   | origin |
- | tiny  | small  | origin |
- | tiny  | large  | origin | //최적화 할거면 반납후 사용해도 되는데 굳이?
- | small | tiny   | small  |
- | small | small  | origin |
- | small | large  | origin |
- | large | tiny   | large  |
- | large | small  | large  |
- | large | large  | origin |
-*/
-
-//여기까지 하고 있었음 
+/* Retain the block when the requested bytes fit after its metadata header. */
 static void *realloc_impl(void *ptr, size_t size){
-  METADATA_t *meta;
   allocation_owner_t owner;
-  void *temp;
-  size_t zone;
-  
-  if (ptr != NULL && size == 0) {
+  METADATA_t *meta;
+  size_t capacity;
+  size_t copy_size;
+  void *replacement;
+
+  if (ptr == NULL)
+    return malloc_impl(size);
+  if (size == 0) {
     free_impl(ptr);
-    return (NULL);
-  }
-  if (ptr == NULL) {
-    return (malloc_impl(size));
+    return NULL;
   }
   meta = find_live_allocation(ptr, &owner);
   if (!meta)
     return NULL;
-  zone = (meta->size & ~INDEX_MASK);
-  if (size < (TINY - METASIZE)) {
+  capacity = (meta->size & ~(size_t)INDEX_MASK) - sizeof(*meta);
+  if (size <= capacity) {
     meta->client_size = size;
-    return ((void *)(meta + 1));
+    if (!owner.bitmap)
+      large_request_sizes[owner.slot] = size;
+    return ptr;
   }
-  else if (size < (SMALL - METASIZE)) {
-    if (zone != TINY) {
-      meta->client_size = size;
-      return ((void *)(meta + 1));
-    }
-    temp = malloc_impl(size);
-    if (temp == NULL) {
-      return (NULL);
-    }
-    size_t client_size_temp = meta->client_size;
-    size_t copy = client_size_temp < size ? client_size_temp : size;
-    temp = ft_memmove(temp, ptr, copy);
-    free_impl(ptr);
-    return (temp);
-  }
-  else {
-    if (zone < size + 1) {
-      temp = malloc_impl(size);
-      if (temp == NULL) {
-        return (NULL);
-      }
-      size_t client_size_temp = meta->client_size;
-      size_t copy = client_size_temp < size ? client_size_temp : size;
-      temp = ft_memmove(temp, ptr, copy);
-      free_impl(ptr);
-      return (temp);
-    }
-    meta->client_size = size;
-    return ((void *)(meta + 1));
-  }
-  return (NULL);
+  replacement = malloc_impl(size);
+  if (!replacement)
+    return NULL;
+  copy_size = owner.bitmap ? (size_t)meta->client_size : large_request_sizes[owner.slot];
+  ft_memcpy(replacement, ptr, copy_size);
+  free_impl(ptr);
+  return replacement;
 }
 
-static void	*callo_imp(size_t nmemb, size_t size){
-  void	*reptr;
-	size_t	total;
+static void *callo_imp(size_t nmemb, size_t size){
+  size_t total;
+  void *ptr;
 
-  if (nmemb == 0 || size == 0)
-    return (malloc_impl(0));
-	total = nmemb * size;
-	if (total != 0 && total / nmemb != size)
-		return (NULL);
-	reptr = (void *)malloc_impl(size * nmemb);
-	if (reptr == NULL) {
-    return (NULL);
-  };
-	ft_memset(reptr, 0, size * nmemb);
-	return (reptr);
+  if (nmemb != 0 && size > SIZE_MAX / nmemb) {
+    errno = ENOMEM;
+    return NULL;
+  }
+  total = nmemb * size;
+  ptr = malloc_impl(total);
+  if (ptr)
+    ft_memset(ptr, 0, total);
+  return ptr;
 }

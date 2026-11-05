@@ -103,9 +103,9 @@ static int case_a10(void)
   return 0;
 }
 
-static int case_a11(void)
+static int calloc_overflow_case(size_t count, size_t width)
 {
-  void *ptr = ft_calloc2(SIZE_MAX, 2);
+  void *ptr = ft_calloc2(count, width);
 
   printf("overflow_result=%s\n", ptr == NULL ? "NULL" : "NONNULL");
   if (ptr != NULL) {
@@ -504,6 +504,51 @@ static int case_a30_double(void)
   return 0;
 }
 
+static int case_a31(void)
+{
+  const size_t old_size = 496;
+  const size_t new_size = 510;
+  unsigned char *original = ft_malloc(old_size);
+  unsigned char *neighbor = ft_malloc(old_size);
+  uintptr_t original_address = (uintptr_t)original;
+
+  if (original == NULL || neighbor == NULL)
+    return case_fail("SMALL boundary setup failed");
+  fill_bytes(original, old_size, 0x13);
+  fill_bytes(neighbor, old_size, 0x42);
+
+  unsigned char *grown = ft_realloc(original, new_size);
+  if (grown == NULL)
+    return case_fail("496-to-510 realloc returned NULL");
+  if ((uintptr_t)grown == original_address)
+    return case_fail("496-to-510 realloc reused an undersized SMALL slot");
+  if (!check_bytes(grown, old_size, 0x13))
+    return case_fail("496-to-510 realloc did not preserve all 496 bytes");
+  fill_bytes(grown, new_size, 0x74);
+
+  unsigned char *replacement = ft_malloc(old_size);
+  if ((uintptr_t)replacement != original_address)
+    return case_fail("496-to-510 realloc did not release its old SMALL slot");
+  fill_bytes(replacement, old_size, 0x31);
+  if (!check_bytes(grown, new_size, 0x74) || !check_bytes(neighbor, old_size, 0x42))
+    return case_fail("grown block or live neighbor lost data");
+  ft_free(replacement);
+  ft_free(grown);
+  ft_free(neighbor);
+  puts("preserved=496\nwritable=510\nneighbor_intact=1\nold_slot_reused=1");
+  return 0;
+}
+
+static int case_a32(void)
+{
+  if (calloc_overflow_case(SIZE_MAX / 2 + 1, 2))
+    return 1;
+  /* These products fit size_t; adding the header or rounding to pages cannot. */
+  if (calloc_overflow_case(SIZE_MAX, 1))
+    return 1;
+  return calloc_overflow_case(SIZE_MAX - sizeof(METADATA_t), 1);
+}
+
 int main(int argc, char **argv)
 {
   if (argc != 2)
@@ -517,7 +562,7 @@ int main(int argc, char **argv)
   if (strcmp(argv[1], "A08") == 0) return allocation_extent_case(497, "LARGE");
   if (strcmp(argv[1], "A09") == 0) return case_a09();
   if (strcmp(argv[1], "A10") == 0) return case_a10();
-  if (strcmp(argv[1], "A11") == 0) return case_a11();
+  if (strcmp(argv[1], "A11") == 0) return calloc_overflow_case(SIZE_MAX, 2);
   if (strcmp(argv[1], "A12") == 0) return case_a12();
   if (strcmp(argv[1], "A13") == 0) return case_a13();
   if (strcmp(argv[1], "A14") == 0) return reuse_case(32, "TINY");
@@ -538,5 +583,7 @@ int main(int argc, char **argv)
   if (strcmp(argv[1], "A29") == 0) return case_a29();
   if (strcmp(argv[1], "A30_FOREIGN") == 0) return case_a30_foreign();
   if (strcmp(argv[1], "A30_DOUBLE") == 0) return case_a30_double();
+  if (strcmp(argv[1], "A31") == 0) return case_a31();
+  if (strcmp(argv[1], "A32") == 0) return case_a32();
   return case_fail("unknown case id");
 }
