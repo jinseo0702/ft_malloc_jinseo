@@ -1,97 +1,55 @@
-# ft_malloc_jinseo
+# Linux mmap 기반 메모리 할당기
 
-`ft_malloc_jinseo`는 메모리 할당기의 동작을 이해하기 위해 만든 학습용 user-space allocator입니다. `LD_PRELOAD`로 `malloc`, `free`, `realloc`, `calloc`을 interposition하고 내부 저장 공간은 `mmap`/`munmap`으로 관리합니다.
+작은 메모리 요청마다 커널에 새 공간을 요청하지 않고, 해제된 자리를 어떻게 찾아 재사용할 수 있을까? 이 C 라이브러리는 작은 요청용 메모리를 한 번에 확보하고 슬롯별 사용 여부를 비트맵으로 관리한다. 큰 요청은 별도로 매핑해 해제 즉시 운영체제에 돌려준다. Linux 프로세스에서 `malloc`, `free`, `realloc`, `calloc`이 어느 경로로 이어지는지 직접 관찰하기 위한 구현이다.
 
-## 만든 이유
+## 할당과 해제의 흐름
 
-범용 allocator의 성능을 재현하기보다 요청 크기를 분류하고, 빈 블록을 찾고, metadata와 실제 mapping의 생명주기를 관리하는 과정을 직접 구현하는 데 목적을 두었습니다. 그래서 각 class의 동시 할당 수를 100개로 제한하고 구조를 관찰하기 쉽게 유지했습니다.
+동적 로더에 `LD_PRELOAD`로 라이브러리를 지정하면 프로그램이 부르는 네 함수가 여기서 구현한 함수로 연결된다. 각 공개 함수는 전역 뮤텍스를 잡고 내부 구현을 호출한다. `realloc`이 새 블록을 할당하고 이전 블록을 해제할 때는 잠금을 다시 잡지 않고 내부 함수를 재사용한다. [표준 함수 연결부](src/ft_override.c) · [할당·해제 구현](src/ft_malloc.c)
 
-## 핵심 기능
+| 요청 크기 | 확보 방식 | 해제 후 처리 |
+|---|---|---|
+| 1~80바이트 · TINY | 첫 요청 때 96바이트 슬롯 100개가 들어갈 영역을 `mmap`한다. | 사용 비트를 지운다. 비어 있는 슬롯은 다음 요청에서 재사용한다. |
+| 81~496바이트 · SMALL | 512바이트 슬롯 100개를 같은 방식으로 관리한다. | 슬롯을 비우고 매핑은 유지한다. |
+| 497바이트 이상 · LARGE | 요청과 메타데이터를 담을 페이지 단위 공간을 개별 `mmap`한다. | 등록된 매핑을 찾아 `munmap`한다. |
 
-- libc 이름의 네 API를 `ft_malloc`, `ft_free`, `ft_realloc`, `ft_calloc2`로 전달합니다.
-- TINY는 최대 80B payload를 96B 고정 slot 100개와 bitmap으로 관리합니다.
-- SMALL은 최대 496B payload를 512B 고정 slot 100개와 bitmap으로 관리합니다.
-- LARGE는 allocation마다 page 크기로 올림한 별도 mapping을 만들고 `free`에서 즉시 `munmap`합니다.
-- 각 allocation은 `[METADATA_t][client payload]` 형태이며 payload 주소를 호출자에게 반환합니다.
-- `show_alloc_mem`으로 class별 live allocation과 요청 byte 합계를 출력합니다.
+위 수치는 검증한 x86-64 환경 기준이다. 슬롯의 앞 16바이트는 메타데이터이고 프로그램에는 그 다음 주소를 준다. 0바이트 요청은 내부에서 1바이트로 처리한다. 세 종류 모두 동시에 사용할 수 있는 블록은 종류별 100개이며, 그 종류의 자리를 다 쓰면 새 요청은 `NULL`을 반환한다. [영역 크기와 자료구조](include/ft_malloc.h)
 
-## 동작 구조
+## 빌드하고 작은 프로그램에 적용하기
 
-```text
-malloc/free/realloc/calloc
-  -> src/ft_override.c interposition
-  -> ft_malloc/ft_free/ft_realloc/ft_calloc2
-  -> global mutex lock
-  -> *_impl
-       1..80B   : TINY bitmap의 첫 free slot
-       81..496B : SMALL bitmap의 첫 free slot
-       497B..   : allocation별 mmap
-  -> global mutex unlock
+Ubuntu 22.04 x86-64(WSL2), GCC, GNU Make, POSIX 스레드 환경에서 확인했다. 대소문자가 다른 테스트 소스가 있으므로 Linux 파일시스템에서 체크아웃한다. 저장소 루트에서 아래 명령을 실행하면 예제 프로그램이 이 할당기로 받은 32바이트에 값을 쓰고 다시 읽은 뒤 해제한다.
+
+```sh
+make HOSTTYPE=x86_64_Linux
+gcc -O0 portfolio_audit/profile_a/tests/preload_smoke.c -o preload-smoke
+LD_PRELOAD="$PWD/libft_malloc_x86_64_Linux.so" ./preload-smoke
 ```
 
-TINY/SMALL arena는 첫 요청 때 한 번 lazy mapping하고 slot이 비어도 유지합니다. LARGE mapping은 개별 소유로 추적해 해제 시 운영체제에 반환합니다.
+예상 출력은 `preload_smoke_ok`다. 프로세스 안의 할당 내역을 직접 보려면 정적 라이브러리를 사용하는 예제를 실행한다.
 
-## 설계하면서 고민한 점
-
-- 네 allocation API의 바깥 경계에서 mutex를 한 번 잡고, 내부 `*_impl`은 다시 lock하지 않도록 분리했습니다. `realloc`과 `calloc`이 내부 할당 동작을 재사용할 때 nested lock을 피하기 위한 구조입니다.
-- bitmap의 첫 빈 bit를 재사용하는 고정 slot 정책으로 split/coalesce 없이 allocation 원리를 드러냈습니다.
-- TINY/SMALL은 반복 사용을 위해 유지하고, LARGE는 필요한 page를 독립적으로 얻고 바로 반납하는 정책을 선택했습니다.
-- 100개 제한은 범용성이나 성능 목표가 아니라 학습 범위를 통제하기 위한 의도적 선택입니다.
-
-## Build
-
-```bash
-make
-```
-
-현재 host 기준 shared library `libft_malloc_$(uname -m)_$(uname -s).so`가 생성됩니다. 직접 `ft_*` API에 link할 정적 library가 필요하면 다음 target을 사용합니다.
-
-```bash
-make static
-```
-
-## Usage
-
-Linux dynamic loader를 통해 한 workload에 allocator를 적용합니다.
-
-```bash
-HOSTTYPE="$(uname -m)_$(uname -s)"
-LD_PRELOAD="$PWD/libft_malloc_${HOSTTYPE}.so" <program> [args...]
-```
-
-고정 slot 수가 작은 학습용 구현이므로 먼저 작은 workload로 동작을 확인하는 편이 적합합니다.
-
-저장소의 정적 API 테스트는 다음 순서로 빌드하고 실행합니다.
-
-```bash
+```sh
 make static
 make -C test
 ./test/testMalloc
 ```
 
-## 수정 전 검증 결과
+## 재현해서 고친 두 가지 오류
 
-아래 수치는 allocator와 맞지 않는 과거 루트 PROFILE B가 아니라 `portfolio_audit/profile_a` 결과입니다.
+- **할당량이 실행마다 다르게 보였다.** 10·100·600바이트 블록이 동시에 살아 있으면 합계가 710이어야 하는데, TINY 슬롯을 훑는 카운터가 초기화되지 않아 700으로 나오기도 했다. 카운터를 초기화하고 `show_alloc_mem` 순회에도 할당기와 같은 잠금을 적용했다. 수정 후 독립 프로세스 10회 모두 처음 710바이트, 100바이트 블록을 해제한 뒤 610바이트를 기록했다.
+- **잘못된 포인터 하나가 사용 중인 슬롯을 비웠다.** 외부 포인터 바로 앞의 값을 할당 메타데이터로 믿으면 실제 사용 중인 비트가 지워지고 다음 할당이 같은 주소를 반환했다. 이제 풀에서는 주소 범위·슬롯 경계·사용 비트를, LARGE에서는 등록된 블록의 정확한 시작 주소를 먼저 확인한다. 같은 재현을 10회 반복해 두 할당에 같은 주소가 돌아가는 현상이 사라졌음을 확인했다. [수정 전 재현 기록](portfolio_audit/profile_a/failures.md) · [회귀 테스트](portfolio_audit/profile_a/tests/direct_cases.c)
 
-| 범위 | 결과 |
-|---|---|
-| 비교 기준 | C allocation contract, 구현의 class/capacity 정책, `mmap`/`munmap` lifecycle |
-| 실행 case | 30 |
-| 분류 | PASS 28 · PARTIAL 1 · FAIL 1 · CRASH 0 |
-| 대표 관찰 | 80/81/496/497B 경계, class별 100개 capacity/recovery, 4 threads × 500 operations를 확인 |
+## 검증 범위
 
-전체 결과: [`portfolio_audit/profile_a/test_results.md`](portfolio_audit/profile_a/test_results.md)
+수정 후 **30/30개** 테스트가 통과했다. 80/81·496/497바이트 경계, 종류별 101번째 요청 실패와 슬롯 재사용, 재할당 시 기존 데이터 보존 사례, 실제 `mmap`·`munmap` 호출, 스레드 4개의 반복 작업을 확인했다. 이 수치는 지정한 입력의 기능 검사 결과다. [테스트 계획](portfolio_audit/profile_a/test_plan.md) · [검사 코드](portfolio_audit/profile_a/tools/run_suite.py)
 
-## 보고서 이후 수정
+기존 30건에 없는 경계값 두 개는 별도로 실행해 현재 구현의 오류를 확인했다.
 
-- A28에서 TINY 순회 카운터가 초기화되지 않아 사용 중인 할당과 합계가 누락됐습니다. 이제 두 카운터를 0에서 시작하고 조회하는 동안 allocator mutex를 잡습니다.
-- A30에서 외부 포인터가 다른 할당의 bitmap을 지울 수 있었습니다. free와 realloc은 이제 arena의 payload 시작 주소와 사용 중인 bit 또는 등록된 LARGE payload 주소가 일치하는지 먼저 확인합니다. 일치하지 않으면 free는 그대로 돌아가고 realloc은 NULL을 반환합니다.
+- **`realloc`의 상위 경계** — 496바이트 SMALL 블록을 510바이트로 늘리면, 실제로 쓸 수 있는 공간은 496바이트인데도 같은 주소를 반환한다. 용량 비교에 16바이트 메타데이터까지 포함한 슬롯 크기를 사용하기 때문이다.
+- **`calloc`의 정수 오버플로** — x86-64에서 `calloc(SIZE_MAX / 2 + 1, 2)`는 곱셈 결과가 정확히 0으로 돌아간다. 이 경우 오버플로 검사를 건너뛰어 오류를 뜻하는 `NULL` 대신 작은 블록의 주소를 반환한다.
 
-## 상세 문서
+전체 검사는 Python 3와 자식 프로세스를 추적할 수 있는 `strace`가 필요하다. 실행기는 기존 기록에 덮어쓰지 않으므로 다음과 같이 현재 커밋의 소스만 별도 디렉터리에 펼쳐 실행한다.
 
-- [PROFILE A 개요](portfolio_audit/profile_a/README.md)
-- [Architecture](portfolio_audit/profile_a/architecture.md)
-- [CHECKPOINT B](portfolio_audit/profile_a/checkpoint_b.md)
-- [Test results](portfolio_audit/profile_a/test_results.md)
-- [Failure analysis](portfolio_audit/profile_a/failures.md)
-- [Design rationale](portfolio_audit/profile_a/design_rationale.md)
+```sh
+audit_dir=$(mktemp -d)
+git archive HEAD | tar -x --exclude='portfolio_audit/profile_a/raw' -C "$audit_dir"
+(cd "$audit_dir" && env -u HOSTTYPE python3 portfolio_audit/profile_a/tools/run_suite.py .)
+```
