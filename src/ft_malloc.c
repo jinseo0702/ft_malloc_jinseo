@@ -1,4 +1,5 @@
 #include "../include/ft_malloc.h"
+#include <stdint.h>
 
 //impl은 implementation(구현)의 줄임말입니다. 보통 함수 이름에 붙여 “내부 구현 함수”라는 뜻으로 씁니다.
 FREEDATA_t manage_free;
@@ -399,8 +400,9 @@ void	*ft_calloc2(size_t nmemb, size_t size){
 
 void show_alloc_mem(){
   size_t total_size = 0;
+  manage_free_mutex_lock(&manage_free_mutex);
   ft_printf("TINY : %p\n", manage_free._tiny);
-  unsigned char find, cnt, cnt2 = 0x00;
+  unsigned char find, cnt = 0, cnt2 = 0;
     for (int idx = 0x00; idx < 0x0D; idx++) {
       for (int fos = 0x00; fos < 0x08 ; fos++) {
         if (cnt >= 100) {
@@ -442,6 +444,7 @@ void show_alloc_mem(){
     }
   }
   ft_printf("Total size: %d byte\n", total_size);
+  manage_free_mutex_unlock(&manage_free_mutex);
 }
 
 void print_error(const char *str){
@@ -722,46 +725,63 @@ static void *malloc_impl(size_t size){
   return (NULL);
 }
 
-/*
-*/
-static void  free_impl(void *ptr){
-  int size_type, index = 0;
+typedef struct {
+  char *bitmap;
+  int slot;
+} allocation_owner_t;
 
-  if (ptr == NULL){
-    return;
-  }
-  METADATA_t *meta;
-  meta = (METADATA_t *)ptr - 1;
-  if(meta == NULL){
-    return;
-  } 
-  index = meta->size & INDEX_MASK;
-  size_type = meta->size & ~INDEX_MASK;
-  if (size_type == TINY) {
-    manage_free.tiny[index] &= ~(1 << meta->position);
-    // meta->size = 0;
-    return ;
-  }
-  else if (size_type == SMALL) {
-    manage_free.small[index] &= ~(1 << meta->position);
-    // meta->size = 0;
-    return ;
-  }
-  else if (size_type > 0x200){
-    int flag = 0;
-    int pos = meta->position;
-    size_t len = meta->size;
-    manage_free.large[pos] = 0;
-    flag = munmap((void *)meta, len);
-    if (flag < 0) {
-      print_error("munmap Fail");
+/* Compare addresses before touching memory supplied by the caller. */
+static int live_pool_slot(void *ptr, void *base, size_t stride, const char *bitmap)
+{
+  uintptr_t address = (uintptr_t)ptr;
+  uintptr_t start = (uintptr_t)base;
+  if (!base || base == MAP_FAILED || address < start
+      || address - start < sizeof(METADATA_t))
+    return -1;
+  uintptr_t offset = address - start - sizeof(METADATA_t);
+  if (offset % stride != 0 || offset / stride >= 100)
+    return -1;
+  int slot = (int)(offset / stride);
+  return (bitmap[slot / 8] & (1 << (slot % 8))) ? slot : -1;
+}
+
+static METADATA_t *find_live_allocation(void *ptr, allocation_owner_t *owner)
+{
+  if (!ptr)
+    return NULL;
+  owner->bitmap = manage_free.tiny;
+  owner->slot = live_pool_slot(ptr, manage_free._tiny, TINY, owner->bitmap);
+  if (owner->slot >= 0)
+    return (METADATA_t *)&manage_free._tiny[owner->slot];
+  owner->bitmap = manage_free.small;
+  owner->slot = live_pool_slot(ptr, manage_free._small, SMALL, owner->bitmap);
+  if (owner->slot >= 0)
+    return (METADATA_t *)&manage_free._small[owner->slot];
+  owner->bitmap = NULL;
+  for (int slot = 0; slot < 100; ++slot) {
+    METADATA_t *meta = (METADATA_t *)manage_free.large[slot];
+    if (meta && ptr == (void *)(meta + 1)) {
+      owner->slot = slot;
+      return meta;
     }
-    manage_free.large_cnt -= 1;
-    return ;
   }
-  else {
-    return ;
+  return NULL;
+}
+
+static void free_impl(void *ptr)
+{
+  allocation_owner_t owner;
+  METADATA_t *meta = find_live_allocation(ptr, &owner);
+  if (!meta)
+    return;
+  if (owner.bitmap) {
+    owner.bitmap[owner.slot / 8] &= ~(1 << (owner.slot % 8));
+    return;
   }
+  if (munmap(meta, meta->size) < 0)
+    print_error("munmap Fail");
+  manage_free.large[owner.slot] = 0;
+  --manage_free.large_cnt;
 }
 
 /*
@@ -807,6 +827,7 @@ ptr이 NULL이 아니라면, 그것은 이전에 malloc(), calloc(), 또는 real
 //여기까지 하고 있었음 
 static void *realloc_impl(void *ptr, size_t size){
   METADATA_t *meta;
+  allocation_owner_t owner;
   void *temp;
   size_t zone;
   
@@ -817,7 +838,9 @@ static void *realloc_impl(void *ptr, size_t size){
   if (ptr == NULL) {
     return (malloc_impl(size));
   }
-  meta = (METADATA_t *)ptr - 1;
+  meta = find_live_allocation(ptr, &owner);
+  if (!meta)
+    return NULL;
   zone = (meta->size & ~INDEX_MASK);
   if (size < (TINY - METASIZE)) {
     meta->client_size = size;

@@ -457,23 +457,50 @@ static int case_a30_foreign(void)
   ft_free((void *)(&fake.metadata + 1));
   alias = ft_malloc(16);
   printf("foreign_free_created_live_alias=%d\n", alias == live);
-  if (alias != NULL)
-    ft_free(alias);
+  if (alias == NULL || alias == live)
+    return case_fail("foreign free changed live slot ownership");
+  ft_free(alias);
+  ft_free(live);
+  /* An invalid pointer need not have any readable preceding metadata. */
+  long page_size = sysconf(_SC_PAGESIZE);
+  if (page_size <= 0)
+    return case_fail("page size unavailable");
+  char *guard = mmap(NULL, (size_t)page_size, PROT_NONE,
+      MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+  if (guard == MAP_FAILED)
+    return case_fail("guard mapping failed");
+  ft_free(guard + sizeof(METADATA_t));
+  if (ft_realloc(guard + sizeof(METADATA_t), 8) != NULL)
+    return case_fail("realloc accepted a foreign pointer");
+  munmap(guard, (size_t)page_size);
   return 0;
 }
 
 static int case_a30_double(void)
 {
-  void *ptr = ft_malloc(16);
-  void *next;
-
-  if (ptr == NULL)
-    return case_fail("double-free setup failed");
-  ft_free(ptr);
-  ft_free(ptr);
-  next = ft_malloc(16);
-  printf("double_free_completed=1\nslot_reusable=%d\n", next == ptr);
-  ft_free(next);
+  const size_t sizes[] = {16, 128, 600};
+  for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); ++i) {
+    unsigned char *live = ft_malloc(sizes[i]);
+    if (!live)
+      return case_fail("invalid-free setup failed");
+    fill_bytes(live, sizes[i], 42);
+    ft_free(live + 1);
+    if (ft_realloc(live + 1, 8) != NULL)
+      return case_fail("realloc accepted an interior pointer");
+    void *other = ft_malloc(sizes[i]);
+    if (!other || other == live || !check_bytes(live, sizes[i], 42))
+      return case_fail("interior free changed live allocation");
+    ft_free(live);
+    ft_free(live);
+    if (ft_realloc(live, 8) != NULL)
+      return case_fail("realloc accepted a released pointer");
+    void *next = ft_malloc(sizes[i]);
+    if (!next || next == other || (sizes[i] <= 496 && next != live))
+      return case_fail("double free changed slot ownership");
+    ft_free(next);
+    ft_free(other);
+  }
+  printf("double_free_completed=1\nslot_reusable=1\n");
   return 0;
 }
 

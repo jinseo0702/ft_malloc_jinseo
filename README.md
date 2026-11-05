@@ -69,7 +69,7 @@ make -C test
 ./test/testMalloc
 ```
 
-## 검증 결과
+## 수정 전 검증 결과
 
 아래 수치는 allocator와 맞지 않는 과거 루트 PROFILE B가 아니라 `portfolio_audit/profile_a` 결과입니다.
 
@@ -82,11 +82,10 @@ make -C test
 
 전체 결과: [`portfolio_audit/profile_a/test_results.md`](portfolio_audit/profile_a/test_results.md)
 
-## 확인된 한계
+## 보고서 이후 수정
 
-- A28은 `show_alloc_mem`의 초기화되지 않은 TINY loop counter 때문에 live allocation과 합계를 누락한 진단 정확성 문제입니다. 10회 중 8회가 기대한 두 snapshot을 모두 충족하지 못했으며, core allocation 결과의 실패로 관찰되지는 않았습니다.
-- `show_alloc_mem`은 allocator mutex를 잡지 않습니다. 동시 allocate/free 상황에서도 안전한 진단이 원래 의도였지만, 현재 구현의 concurrent snapshot 안전성은 검증되지 않았습니다.
-- A30은 crafted foreign pointer가 10/10회 live bitmap slot을 지워 alias를 만든 robustness limitation이며 double free도 감지하지 않습니다. 일반 C allocation contract 밖에서는 `PARTIAL (NON-CONTRACT)`이지만, invalid/double-free 방어가 원래 프로젝트 요구사항이었으므로 그 기준에서는 아직 충족하지 못한 항목입니다.
+- A28에서 TINY 순회 카운터가 초기화되지 않아 사용 중인 할당과 합계가 누락됐습니다. 이제 두 카운터를 0에서 시작하고 조회하는 동안 allocator mutex를 잡습니다.
+- A30에서 외부 포인터가 다른 할당의 bitmap을 지울 수 있었습니다. free와 realloc은 이제 arena의 payload 시작 주소와 사용 중인 bit 또는 등록된 LARGE payload 주소가 일치하는지 먼저 확인합니다. 일치하지 않으면 free는 그대로 돌아가고 realloc은 NULL을 반환합니다.
 
 ## 상세 문서
 
